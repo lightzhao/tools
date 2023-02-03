@@ -1,0 +1,22 @@
+{
+  "common": {},
+  "mysqlSource": {
+    "hostname": "hostname_add",
+    "port": 3306,
+    "databaseList": "dbname",
+    "tableList": "dbname.t1",
+    "username": "mysql",
+    "password": "123",
+    "debeziumProperties": {
+      "message.key.columns": "",
+      "decimal.handling.mode": "string",
+      "converters": "dateConverters",
+      "dateConverters.type": "debezium.converter.MySqlDateTimeConverter"
+    }
+  },
+  "kafkaSink": {
+    "servers": "server-address",
+    "clientId": "client.id",
+    "topic": "topicName"
+  }
+}
