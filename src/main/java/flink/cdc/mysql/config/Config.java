@@ -1,10 +1,11 @@
 package flink.cdc.mysql.config;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Config {
 
-    Map<String, String> common;
+    Map<String,String>  common = new HashMap<>();
 
     MysqlSourceEntity mysqlSource;
 

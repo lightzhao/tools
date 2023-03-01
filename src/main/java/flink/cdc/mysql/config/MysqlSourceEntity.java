@@ -1,6 +1,8 @@
 package flink.cdc.mysql.config;
 
 
+import com.ververica.cdc.connectors.mysql.table.StartupMode;
+
 import java.util.Properties;
 
 public class MysqlSourceEntity {
@@ -11,18 +13,68 @@ public class MysqlSourceEntity {
     private String tableList;
     private String username;
     private String password;
-    private Properties debeziumProperties;
+    private Properties debeziumProperties = new Properties();
+    private StartupMode startMode = StartupMode.LATEST_OFFSET;
+    private String startModeWithFile;
+    private Long startModeWithOffset;
+    private String startModeWithGtid;
+    private Long startModeWithTimestamp;
 
     @Override
     public String toString() {
-        return "MysqlSource{" +
+        return "MysqlSourceEntity{" +
                 "hostname='" + hostname + '\'' +
                 ", port=" + port +
-                ", databaseList=" + databaseList +
-                ", tableList=" + tableList +
+                ", databaseList='" + databaseList + '\'' +
+                ", tableList='" + tableList + '\'' +
                 ", username='" + username + '\'' +
                 ", debeziumProperties=" + debeziumProperties +
+                ", startMode=" + startMode +
+                ", startModeWithFile='" + startModeWithFile + '\'' +
+                ", startModeWithOffset=" + startModeWithOffset +
+                ", startModeWithGtid='" + startModeWithGtid + '\'' +
+                ", startModeWithTimestamp=" + startModeWithTimestamp +
                 '}';
+    }
+
+    public String getStartModeWithFile() {
+        return startModeWithFile;
+    }
+
+    public void setStartModeWithFile(String startModeWithFile) {
+        this.startModeWithFile = startModeWithFile;
+    }
+
+    public StartupMode getStartMode() {
+        return startMode;
+    }
+
+    public void setStartMode(StartupMode startMode) {
+        this.startMode = startMode;
+    }
+
+    public Long getStartModeWithOffset() {
+        return startModeWithOffset;
+    }
+
+    public void setStartModeWithOffset(Long startModeWithOffset) {
+        this.startModeWithOffset = startModeWithOffset;
+    }
+
+    public String getStartModeWithGtid() {
+        return startModeWithGtid;
+    }
+
+    public void setStartModeWithGtid(String startModeWithGtid) {
+        this.startModeWithGtid = startModeWithGtid;
+    }
+
+    public Long getStartModeWithTimestamp() {
+        return startModeWithTimestamp;
+    }
+
+    public void setStartModeWithTimestamp(Long startModeWithTimestamp) {
+        this.startModeWithTimestamp = startModeWithTimestamp;
     }
 
     public String getHostname() {

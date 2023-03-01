@@ -7,7 +7,7 @@ public class KafkaSinkEntity {
     private String servers;
     private String clientId;
     private String topic;
-    private Properties params;
+    private Properties params = new Properties();
 
     @Override
     public String toString() {

@@ -8,14 +8,22 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.time.*;
-import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.Properties;
 import java.util.function.Consumer;
 
+/**
+ * MySqlDateTimeConverter
+ */
 public class MySqlDateTimeConverter implements CustomConverter<SchemaBuilder, RelationalColumn> {
 
     private final static Logger logger = LoggerFactory.getLogger(MySqlDateTimeConverter.class);
 
     private ZoneOffset zoneOffset = ZoneOffset.of("+8");
+
+    DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+    DateTimeFormatter formatter_ = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'+08:00'");
 
     @Override
     public void configure(Properties props) {
@@ -89,8 +97,11 @@ public class MySqlDateTimeConverter implements CustomConverter<SchemaBuilder, Re
          * binlog 增量数据
          */
         if (input instanceof ZonedDateTime) {
-            Date dateObj = Date.from(Instant.parse(input.toString()));
-            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateObj.getTime()), zoneOffset).toString();
+            ZonedDateTime zoneddatetime = (ZonedDateTime) input;
+            String value = zoneddatetime.format(formatter);
+            Date dateObj = Date.from(Instant.parse(value));
+            zoneddatetime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateObj.getTime()), zoneOffset);
+            return zoneddatetime.format(formatter_);
             /**
              * 全量数据
              */
