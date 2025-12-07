@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数独游戏 - 4宫格 & 6宫格</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select {
+            background: white;
+            min-width: 120px;
+        }
+
+        select:hover {
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: bold;
+            min-width: 100px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .game-board {
+            display: inline-block;
+            margin: 0 auto;
+            border: 3px solid #333;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #999;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            background: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .cell:focus {
+            outline: 3px solid #667eea;
+            background: #f0f4ff;
+        }
+
+        .cell.prefilled {
+            background: #e8e8e8;
+            color: #333;
+            cursor: default;
+        }
+
+        .cell.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .cell.correct {
+            background: #e8f5e9;
+        }
+
+        /* 4宫格样式 */
+        .board-4x4 .cell {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+        }
+
+        /* 6宫格样式 */
+        .board-6x6 .cell {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+        }
+
+        /* 粗边框分隔 */
+        .board-4x4 .cell:nth-child(2n) {
+            border-right: 2px solid #333;
+        }
+
+        .board-4x4 .cell:nth-child(n+3):nth-child(-n+4),
+        .board-4x4 .cell:nth-child(n+7):nth-child(-n+8) {
+            border-bottom: 2px solid #333;
+        }
+
+        .board-6x6 .cell:nth-child(3n) {
+            border-right: 2px solid #333;
+        }
+
+        .board-6x6 .cell:nth-child(n+4):nth-child(-n+6),
+        .board-6x6 .cell:nth-child(n+10):nth-child(-n+12) {
+            border-bottom: 2px solid #333;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        .status.success {
+            color: #4caf50;
+        }
+
+        .status.error {
+            color: #f44336;
+        }
+
+        .number-pad {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .number-btn {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .number-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .number-btn.active {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 数独游戏</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>宫格类型</label>
+                <select id="gridType">
+                    <option value="4">4宫格 (2×2)</option>
+                    <option value="6">6宫格 (2×3)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>难度级别</label>
+                <select id="difficulty">
+                    <option value="easy">初级</option>
+                    <option value="medium">中级</option>
+                    <option value="hard">高级</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>操作</label>
+                <button id="newGame">新游戏</button>
+            </div>
+        </div>
+
+        <div class="board-container">
+            <div id="gameBoard" class="game-board"></div>
+        </div>
+
+        <div class="number-pad" id="numberPad"></div>
+
+        <div class="actions">
+            <button id="checkBtn">检查答案</button>
+            <button id="hintBtn">提示</button>
+            <button id="solveBtn">显示答案</button>
+            <button id="clearBtn">清除</button>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        class SudokuGame {
+            constructor() {
+                this.gridSize = 4;
+                this.difficulty = 'easy';
+                this.board = [];
+                this.solution = [];
+                this.userBoard = [];
+                this.selectedCell = null;
+                this.difficultyLevels = {
+                    easy: { 4: 4, 6: 8 },
+                    medium: { 4: 6, 6: 15 },
+                    hard: { 4: 8, 6: 25 }
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.createNumberPad();
+                this.newGame();
+            }
+
+            setupEventListeners() {
+                document.getElementById('gridType').addEventListener('change', (e) => {
+                    this.gridSize = parseInt(e.target.value);
+                    this.newGame();
+                });
+
+                document.getElementById('difficulty').addEventListener('change', (e) => {
+                    this.difficulty = e.target.value;
+                    this.newGame();
+                });
+
+                document.getElementById('newGame').addEventListener('click', () => {
+                    this.newGame();
+                });
+
+                document.getElementById('checkBtn').addEventListener('click', () => {
+                    this.checkSolution();
+                });
+
+                document.getElementById('hintBtn').addEventListener('click', () => {
+                    this.giveHint();
+                });
+
+                document.getElementById('solveBtn').addEventListener('click', () => {
+                    this.showSolution();
+                });
+
+                document.getElementById('clearBtn').addEventListener('click', () => {
+                    this.clearUserInputs();
+                });
+            }
+
+            createNumberPad() {
+                const pad = document.getElementById('numberPad');
+                pad.innerHTML = '';
+                for (let i = 1; i <= this.gridSize; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'number-btn';
+                    btn.textContent = i;
+                    btn.addEventListener('click', () => {
+                        if (this.selectedCell) {
+                            this.setCellValue(this.selectedCell, i);
+                        }
+                    });
+                    pad.appendChild(btn);
+                }
+            }
+
+            newGame() {
+                this.generatePuzzle();
+                this.renderBoard();
+                this.updateNumberPad();
+                this.clearStatus();
+            }
+
+            generatePuzzle() {
+                // 生成完整解
+                this.solution = this.generateSolution();
+                // 复制为初始棋盘
+                this.board = this.solution.map(row => [...row]);
+                // 根据难度移除数字
+                this.removeNumbers();
+                // 用户棋盘
+                this.userBoard = this.board.map(row => [...row]);
+            }
+
+            generateSolution() {
+                const size = this.gridSize;
+                const board = Array(size).fill(null).map(() => Array(size).fill(0));
+                
+                // 使用回溯算法生成完整解
+                this.solveSudoku(board);
+                return board;
+            }
+
+            solveSudoku(board) {
+                const size = this.gridSize;
+                const boxRows = size === 4 ? 2 : 2;
+                const boxCols = size === 4 ? 2 : 3;
+
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        if (board[row][col] === 0) {
+                            const numbers = this.shuffleArray([...Array(size)].map((_, i) => i + 1));
+                            for (const num of numbers) {
+                                if (this.isValid(board, row, col, num, boxRows, boxCols)) {
+                                    board[row][col] = num;
+                                    if (this.solveSudoku(board)) {
+                                        return true;
+                                    }
+                                    board[row][col] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            isValid(board, row, col, num, boxRows, boxCols) {
+                const size = this.gridSize;
+                
+                // 检查行
+                for (let c = 0; c < size; c++) {
+                    if (board[row][c] === num) return false;
+                }
+                
+                // 检查列
+                for (let r = 0; r < size; r++) {
+                    if (board[r][col] === num) return false;
+                }
+                
+                // 检查宫格
+                const boxStartRow = Math.floor(row / boxRows) * boxRows;
+                const boxStartCol = Math.floor(col / boxCols) * boxCols;
+                for (let r = boxStartRow; r < boxStartRow + boxRows; r++) {
+                    for (let c = boxStartCol; c < boxStartCol + boxCols; c++) {
+                        if (board[r][c] === num) return false;
+                    }
+                }
+                
+                return true;
+            }
+
+            removeNumbers() {
+                const size = this.gridSize;
+                const cellsToRemove = this.difficultyLevels[this.difficulty][size];
+                const totalCells = size * size;
+                const positions = [];
+                
+                for (let i = 0; i < totalCells; i++) {
+                    positions.push(i);
+                }
+                
+                this.shuffleArray(positions);
+                
+                let removed = 0;
+                for (const pos of positions) {
+                    if (removed >= cellsToRemove) break;
+                    const row = Math.floor(pos / size);
+                    const col = pos % size;
+                    this.board[row][col] = 0;
+                    removed++;
+                }
+            }
+
+            shuffleArray(array) {
+                const arr = [...array];
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
+            renderBoard() {
+                const boardElement = document.getElementById('gameBoard');
+                boardElement.innerHTML = '';
+                boardElement.className = `game-board board-${this.gridSize}x${this.gridSize}`;
+                
+                for (let row = 0; row < this.gridSize; row++) {
+                    for (let col = 0; col < this.gridSize; col++) {
+                        const cell = document.createElement('input');
+                        cell.type = 'text';
+                        cell.className = 'cell';
+                        cell.maxLength = 1;
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        
+                        const value = this.userBoard[row][col];
+                        if (value !== 0) {
+                            cell.value = value;
+                            cell.classList.add('prefilled');
+                            cell.readOnly = true;
+                        }
+                        
+                        cell.addEventListener('click', () => {
+                            this.selectCell(cell);
+                        });
+                        
+                        cell.addEventListener('input', (e) => {
+                            const val = e.target.value;
+                            if (val && /^[1-9]$/.test(val)) {
+                                const num = parseInt(val);
+                                if (num <= this.gridSize) {
+                                    this.setCellValue(cell, num);
+                                } else {
+                                    e.target.value = '';
+                                }
+                            } else if (val === '') {
+                                this.setCellValue(cell, 0);
+                            }
+                        });
+                        
+                        cell.addEventListener('keydown', (e) => {
+                            if (e.key >= '1' && e.key <= '9') {
+                                const num = parseInt(e.key);
+                                if (num <= this.gridSize) {
+                                    this.setCellValue(cell, num);
+                                }
+                            } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                                this.setCellValue(cell, 0);
+                            }
+                        });
+                        
+                        boardElement.appendChild(cell);
+                    }
+                }
+            }
+
+            selectCell(cell) {
+                if (cell.classList.contains('prefilled')) return;
+                
+                // 移除之前的选中状态
+                document.querySelectorAll('.cell').forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                cell.classList.add('selected');
+                cell.focus();
+                this.selectedCell = cell;
+            }
+
+            setCellValue(cell, value) {
+                if (cell.classList.contains('prefilled')) return;
+                
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                
+                this.userBoard[row][col] = value;
+                cell.value = value || '';
+                cell.classList.remove('error', 'correct');
+                
+                if (value !== 0) {
+                    if (this.solution[row][col] === value) {
+                        cell.classList.add('correct');
+                    } else {
+                        cell.classList.add('error');
+                    }
+                }
+            }
+
+            updateNumberPad() {
+                const pad = document.getElementById('numberPad');
+                pad.innerHTML = '';
+                for (let i = 1; i <= this.gridSize; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'number-btn';
+                    btn.textContent = i;
+                    btn.addEventListener('click', () => {
+                        if (this.selectedCell) {
+                            this.setCellValue(this.selectedCell, i);
+                        }
+                    });
+                    pad.appendChild(btn);
+                }
+            }
+
+            checkSolution() {
+                let hasError = false;
+                let isComplete = true;
+                
+                for (let row = 0; row < this.gridSize; row++) {
+                    for (let col = 0; col < this.gridSize; col++) {
+                        const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                        const userValue = this.userBoard[row][col];
+                        const correctValue = this.solution[row][col];
+                        
+                        if (userValue === 0) {
+                            isComplete = false;
+                            cell.classList.remove('error', 'correct');
+                        } else if (userValue !== correctValue) {
+                            hasError = true;
+                            cell.classList.add('error');
+                            cell.classList.remove('correct');
+                        } else {
+                            cell.classList.add('correct');
+                            cell.classList.remove('error');
+                        }
+                    }
+                }
+                
+                const status = document.getElementById('status');
+                if (isComplete && !hasError) {
+                    status.textContent = '🎉 恭喜！你完成了数独！';
+                    status.className = 'status success';
+                } else if (hasError) {
+                    status.textContent = '❌ 有错误，请检查！';
+                    status.className = 'status error';
+                } else {
+                    status.textContent = '✅ 目前没有错误，继续加油！';
+                    status.className = 'status success';
+                }
+            }
+
+            giveHint() {
+                const emptyCells = [];
+                for (let row = 0; row < this.gridSize; row++) {
+                    for (let col = 0; col < this.gridSize; col++) {
+                        if (this.userBoard[row][col] === 0) {
+                            emptyCells.push({ row, col });
+                        }
+                    }
+                }
+                
+                if (emptyCells.length === 0) {
+                    this.showStatus('没有需要提示的格子了！', 'success');
+                    return;
+                }
+                
+                const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                const cell = document.querySelector(`[data-row="${randomCell.row}"][data-col="${randomCell.col}"]`);
+                const correctValue = this.solution[randomCell.row][randomCell.col];
+                
+                this.setCellValue(cell, correctValue);
+                this.showStatus('已给出一个提示！', 'success');
+            }
+
+            showSolution() {
+                for (let row = 0; row < this.gridSize; row++) {
+                    for (let col = 0; col < this.gridSize; col++) {
+                        const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                        if (!cell.classList.contains('prefilled')) {
+                            this.setCellValue(cell, this.solution[row][col]);
+                        }
+                    }
+                }
+                this.showStatus('已显示完整答案！', 'success');
+            }
+
+            clearUserInputs() {
+                for (let row = 0; row < this.gridSize; row++) {
+                    for (let col = 0; col < this.gridSize; col++) {
+                        if (this.board[row][col] === 0) {
+                            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                            this.setCellValue(cell, 0);
+                        }
+                    }
+                }
+                this.clearStatus();
+            }
+
+            showStatus(message, type) {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+            }
+
+            clearStatus() {
+                const status = document.getElementById('status');
+                status.textContent = '';
+                status.className = 'status';
+            }
+        }
+
+        // 初始化游戏
+        window.addEventListener('DOMContentLoaded', () => {
+            new SudokuGame();
+        });
+    </script>
+</body>
+</html>
